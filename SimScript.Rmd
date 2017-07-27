@@ -1,0 +1,40 @@
+---
+title: "Statistical Inference Project"
+author: "JP Dunlap"
+date: "July 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1: Simulation Exercise
+
+Investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution is simulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. Investigate the distribution of averages of 40 exponentials. Conduct 1000 simulations.
+
+```{r intialization}
+## Initialize lambda, mu, and sigma
+
+lambda <- 0.20
+mu <- 1/lambda
+sigma <- 1/lambda
+
+```
+
+### Discussion
+
+The exponential distribution is the probability distribution in which events occur continuously and independently based on a constant rate of change. It descibes the time between events in a Poission process (https://en.wikipedia.org/wiki/Exponential_distribution).
+
+The exponential distribution has a theoretical mean and standard deviation equal to 1/lambda, where lambda is the rate of change in the underlying Poisson process.
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
