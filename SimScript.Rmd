@@ -5,16 +5,18 @@ date: "July 27, 2017"
 output: html_document
 ---
 
-```{r setup, include=TRUE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 require(ggplot2)
 require(dplyr)
+require(knitr)
+require(kableExtra)
 require(cowplot)
 set.seed(14945)
 
 ```
 
-## Part 1: Simulation Exercise
+# Part 1: Simulation Exercise
 
 Investigate the exponential distribution in R and compare it with the Central Limit Theorem. The exponential distribution is simulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also 1/lambda. Set lambda = 0.2 for all of the simulations. Investigate the distribution of averages of 40 exponentials. Conduct 1000 simulations.
 
@@ -28,9 +30,9 @@ sigma <- 1/lambda
 
 ```
 
-### Discussion
+## Discussion
 
-The exponential distribution is the probability distribution in which events occur continuously and independently based on a constant rate of change. It descibes the time between events in a Poission process (https://en.wikipedia.org/wiki/Exponential_distribution).
+The exponential distribution is the probability distribution in which events occur continuously and independently based on a constant rate of change. It describes the time between events in a Poisson process (https://en.wikipedia.org/wiki/Exponential_distribution).
 
 The exponential distribution has a theoretical mean and standard deviation equal to 1/lambda, where lambda is the rate of change in the underlying Poisson process. This means that the shape of the exponential distribution is completely dependent on the rate of change (lambda) as illustrated in this plot.
 
@@ -51,7 +53,7 @@ g
 
 The impact of the changes in lambda are clear from the above chart. 
 
-### Simulation
+## Simulation
 
 The task at hand is to  simulate 1000 exponential distributions with 40 observations each to determine of the Central Limit Theorem is support for exponential distributions. That is, test the distribution of the means and standard deviations of 1000 simulations of of 40 values from taken from an exponential distribution with Lambda = 0.20, to determine if they approximate the theoretical mu and sigma of the distribution, 1/lambda = 1/0.20 = 5. 
 
@@ -86,27 +88,28 @@ g <- g + labs(x = "Mean of Calculated Means", title = "Distribution of Means", y
 g <- g + coord_cartesian(xlim=c(3,8), ylim=c(0,100))
 g <- g + geom_vline(xintercept = 5, col = "orange", lwd = 1)
 g <- g + geom_vline(xintercept = mean(simmn), col = "orange", lwd = 1, lty = 2)
-g <- g + annotate("text",x=7,y=100,label = "Solid Line at mu", color = "black", cex = 4)
-g <- g + annotate("text",x=7,y=95,label = "Dashed Line at mean", color = "black", cex = 4)
+g <- g + annotate("text",x=6,y=100,label = "Solid Line at mu", color = "black", cex = 4,hjust=0)
+g <- g + annotate("text",x=6,y=95,label = "Dashed Line at mean", color = "black", cex = 4,hjust=0)
+g <- g + annotate("text",x=6,y=90,label = "(These lines nearly overlap)", color = "black", cex = 4,hjust=0)
 h <- ggplot(data.frame(simsd), aes(simsd)) + geom_histogram(binwidth = 0.20, col = "brown", fill = "orange")
 h <- h + labs(x = "Mean of Calculated St Devs", title = "Distribution of Standard Deviations", y = "Freq Count")
 h <- h + coord_cartesian(xlim=c(3,8), ylim=c(0,100))
 h <- h + geom_vline(xintercept = 5, col = "blue", lwd = 1)
 h <- h + geom_vline(xintercept = mean(simsd), col = "blue", lwd = 1, lty = 2)
-h <- h + annotate("text",x=7,y=100,label = "Solid Line at sigma", color = "black", cex = 4)
-h <- h + annotate("text",x=7,y=95,label = "Dashed Line at St Dev", color = "black", cex = 4)
+h <- h + annotate("text",x=6,y=100,label = "Solid Line at sigma", color = "black", cex = 4,hjust=0)
+h <- h + annotate("text",x=6,y=95,label = "Dashed Line at St Dev", color = "black", cex = 4,hjust=0)
 plot_grid(g,h)
 
 
 ```
 
-### Part 1 Conclusion
+## Part 1 Conclusion
 
 Both the calculated statistics and the two histograms show what appears to be a far more Gaussian distribution of the mean and of the standard deviation about the theoretical values of 5 for both mu and sigma. It appears reasonable to conclude that the Central Limit Theorem holds in the case of exponential distributions. 
 
 The actual calculated mean of the simulated means is `r mean.simmn` compared to a theoretical value of 5.0. The calculated mean of the simulated standard deviations is `r mean.simsd` compared to a theoretical value of 5.0.
 
-## Part 2: Basic Inferential Data Analysis 
+# Part 2: Basic Inferential Data Analysis 
 
 In 1947 E.W. Crampton published "The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig" in the Journal of Nutrition. (see Crampton, E. W. (1947) The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig. The Journal of Nutrition 33(5): 491–504. http://jn.nutrition.org/content/33/5/491.full.pdf). In his paper he discussed the impact of two different forms of vitamin C, administered in three does levels, on tooth growth in Guinea Pigs.
 
@@ -114,7 +117,7 @@ The research design utilized 60 Guinea Pigs each of which was administered Vitam
 
 This analysis will attempt to determine the impact of the various delivery methods/dosages on the length of the odontoblasts.
 
-### Data Mangement
+## Data Mangement
 
 As the ToothGrowth database is a part of the R package installation it needs only to be loaded in order for analysis to be conducted. A frequency graph of the odontoblast length for each possible combination is shown.
 
@@ -124,7 +127,7 @@ data(ToothGrowth)
 
 ```
 
-### Exploratory Data Analysis
+## Exploratory Data Analysis
 
 The first step is to examine the data grouped by the two effect variables, dose and delivery method. A histogram of each combination is shown below.
 
@@ -138,9 +141,9 @@ g
 
 It appears clear that there are some differences based on dosage amounts within delivery methods, though the difference between delivery methods at any given dose seem a little less clear. 
 
-#### Adding the Confidence Intervals
+### Examining the Confidence Intervals
 
-Layering the upper ad lower confidence intervals may provide some insight.
+Layering the upper and lower confidence intervals may provide some insight.
 
 ```{r addConfInter, fig.width = 12}
 ## Get Mean and stdev for each combination, store id dataframe ci.in
@@ -175,3 +178,185 @@ g
 
 Examining the histograms with the 95% confidence interval shown suggests that there may be a significant effect from the delivery method at the lower two doses (0.5, and 1,0 mg/day). The method does not appear to be a significant effect at the higher does of 2.0mg/day.
 
+Examining the actual lower and upper confidence intervals will provide additional insight.
+
+
+```{r byDose}
+
+f1 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 0.5)
+f2 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 1)
+f3 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 2)
+e2 <- filter(ci.in[,c(1,5,6)], ci.in$Delivery.Meth == "OJ")
+e1 <- filter(ci.in[,c(1,5,6)], ci.in$Delivery.Meth == "VC")
+
+
+```
+
+
+#### By Dosing Levels
+
+Looking at a comparison of the CI bounds by dosing level may help to better understand the potential differences.
+
+##### Dose at 0.50 mg/day
+`r kable(f1, format = "html", table.attr = "style='width:60%;'") %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+The confidence interval for the two delivery methods shows no overlap between the two. This seems to suggest that at the dose level of 0.50 mg/day, the delivery method does make a difference. 
+
+##### Dose at 1.0 mg/day
+`r kable(f2, format = "html", table.attr = "style='width:60%;'") %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+Similarly the confidence interval for the two delivery methods shows no overlap between the two. This seems to suggest that at the dose level of 1.0 mg/day, the delivery method does make a difference. 
+
+##### Dose at 2.0 mg/day
+`r kable(f3, format = "html", table.attr = "style='width:60%;'") %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+By contrast, The confidence interval for the two delivery methods shows a complete overlap between the two. This suggest that at the dose level of 2.0 mg/day, the delivery method no longer seems make a difference. 
+
+
+#### By Delivery Method
+
+Looking at a comparison of the CI bounds by dosing level may help to better understand the potential differences.
+
+##### Delivery Method - Orange Juice
+`r kable(e2, format = "html", table.attr = "style='width:60%;'") %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+The confidence interval for the three dose amounts shows no overlap between the lower two level, and a small overlap between the upper two. This seems to suggest that effect of the minimal dose of orange juice is less than the middle and higher dose, but that the effect between the middle and higher dose are less clear. 
+
+##### Delivery Method - Ascorbic Acid
+`r kable(e1, format = "html", table.attr = "style='width:60%;'") %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+For ascorbic acid, the confidence interval for the three dose level shows no overlap at all. This seems to suggest that for ascorbic acid the size of the dose has a significant effect on growth.
+
+### Conducting T-Tests on the Differences
+
+T-tests are a traditional small sample statistic to examine the difference between two samples, in this case, taken from the same population. In the case of this data set, the comparison is between the various combinations of dose rate and delivery method. Note that it would also be appropriate to use other statistical tests such as one-way and two-way analysis of variance to explore these relationships, these techniques are outside of the scope of this project. 
+
+```{r Tcalcs}
+
+## Code to create all of the possible t.tests. In all there are nine comparing the logical progressions of dose by treatment and dose within treatment.
+
+ii = 0
+for (i in c(0.5, 1.0, 2.0)){
+        ii = ii+1 
+        jj = 0
+        for (j in c("OJ", "VC")){
+                jj = jj + 1
+                assign(paste0("df",ii,jj), filter(ToothGrowth, Delivery.Meth == j & Dose == i))
+                
+        }
+}
+
+## create 3 possible combinations of dose by treatment
+df1. <- rbind(df11,df12) ## treatment by dose at 0.5
+df2. <- rbind(df21,df22) ## treatment by dose at 1.0
+df3. <- rbind(df31,df32) ## treatment by dose at 2.0
+
+## create 6 possible combinations of treatment by dose
+df.1.1 <- rbind(df11,df21) ## OJ at .05 and 1.0
+df.1.2 <- rbind(df11,df31) ## OJ at .05 and 2.0
+df.1.3 <- rbind(df21,df31) ## OJ at 1.0 and 2.0
+
+df.2.1 <- rbind(df12,df22) ## VC at .05 and 1.0
+df.2.2 <- rbind(df12,df32) ## VC at .05 and 2.0
+df.2.3 <- rbind(df22,df32) ## VC at 1.0 and 2.0
+
+## run first three t.tests on possible combinations of dose by treatment
+tt1. <- t.test(len ~ Delivery.Meth, data = df1., alternative = "t", paired = F, var.equal = T)
+tt2. <- t.test(len ~ Delivery.Meth, data = df2., alternative = "t", paired = F, var.equal = T)
+tt3. <- t.test(len ~ Delivery.Meth, data = df3., alternative = "t", paired = F, var.equal = T)
+
+ttt1 <- data.frame(Test_Conducted=as.character(),tvalue=as.double(),pvalue=as.double(),
+                   Significant = as.logical(), Bonferroni = as.double(), BH = as.double(), stringsAsFactors = FALSE)
+ttt1[1,1] <- "Methods Compared at Dose 0.5 mg/day"
+ttt1[1,2] <- format(tt1.$statistic, digits = 3, nsmall = 3)
+ttt1[1,3] <- format(tt1.$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt1.$p.value <= 0.05) {ttt1[1,4] <- TRUE} else {ttt1[1,4] <- FALSE}
+
+ttt1[2,1] <- "Methods Compared at Dose 1.0 mg/day"
+ttt1[2,2] <- format(tt2.$statistic, digits = 3, nsmall = 3)
+ttt1[2,3] <- format(tt2.$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt2.$p.value <= 0.05) {ttt1[2,4] <- TRUE} else {ttt1[2,4] <- FALSE}
+
+ttt1[3,1] <- "Methods Compared at Dose 2.0 mg/day"
+ttt1[3,2] <- format(tt3.$statistic, digits = 3, nsmall = 3)
+ttt1[3,3] <- format(tt3.$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt3.$p.value <= 0.05) {ttt1[3,4] <- TRUE} else {ttt1[3,4] <- FALSE}
+
+## Conduct Bonferroni and Benjamini-Hochberg corrections
+
+ttt1[,5] <- format(p.adjust(ttt1[,3], method = "bonferroni"),scientific = FALSE, digits = 5, nsmall = 5)
+ttt1[,6] <- format(p.adjust(ttt1[,3], method = "BH"),scientific = FALSE, digits = 5, nsmall = 5)
+
+## run three t.tests on possible combinations of OJ by dose
+tt.1.1 <- t.test(len ~ Dose, data = df.1.1, alternative = "t", paired = F, var.equal = T)
+tt.1.2 <- t.test(len ~ Dose, data = df.1.2, alternative = "t", paired = F, var.equal = T)
+tt.1.3 <- t.test(len ~ Dose, data = df.1.3, alternative = "t", paired = F, var.equal = T)
+
+ttt2 <- data.frame(Test_Conducted=as.character(), tvalue=as.double(),pvalue=as.double(),
+                   Significant = as.logical(), stringsAsFactors = FALSE, Bonferroni = as.double(), BH = as.double())
+ttt2[1,1] <- "Dose compared: 0.5 to 1.0 mg/day, with Orange Juice delivery"
+ttt2[1,2] <- format(tt.1.1$statistic, digits = 3, nsmall = 3)
+ttt2[1,3] <- format(tt.1.1$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.1.1$p.value <= 0.05) {ttt2[1,4] <- TRUE} else {ttt2[1,4] <- FALSE}
+
+ttt2[2,1] <- "Dose compared: 0.5 to 2.0 mg/day, with Orange Juice delivery"
+ttt2[2,2] <- format(tt.1.2$statistic, digits = 3, nsmall = 3)
+ttt2[2,3] <- format(tt.1.2$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.1.2$p.value <= 0.05) {ttt2[2,4] <- TRUE} else {ttt2[2,4] <- FALSE}
+
+ttt2[3,1] <- "Dose compared: 1.0 to 2.0 mg/day, with Orange Juice delivery"
+ttt2[3,2] <- format(tt.1.3$statistic, digits = 3, nsmall = 3)
+ttt2[3,3] <- format(tt.1.3$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.1.3$p.value <= 0.05) {ttt2[3,4] <- TRUE} else {ttt2[3,4] <- FALSE}
+
+## run three t.tests on possible combinations of VC by dose
+tt.2.1 <- t.test(len ~ Dose, data = df.2.1, alternative = "t", paired = F, var.equal = T)
+tt.2.2 <- t.test(len ~ Dose, data = df.2.2, alternative = "t", paired = F, var.equal = T)
+tt.2.3 <- t.test(len ~ Dose, data = df.2.3, alternative = "t", paired = F, var.equal = T)
+
+ttt2[4,1] <- "Dose compared: 0.5 to 1.0 mg/day, with Ascorbic Acid delivery"
+ttt2[4,2] <- format(tt.2.1$statistic, digits = 3, nsmall = 3)
+ttt2[4,3] <- format(tt.2.1$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.2.1$p.value <= 0.05) {ttt2[4,4] <- TRUE} else {ttt2[4,4] <- FALSE}
+
+ttt2[5,1] <- "Dose compared: 0.5 to 2.0 mg/day, with Ascorbic Acid delivery"
+ttt2[5,2] <- format(tt.2.2$statistic, digits = 3, nsmall = 3)
+ttt2[5,3] <- format(tt.2.2$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.2.2$p.value <= 0.05) {ttt2[5,4] <- TRUE} else {ttt2[5,4] <- FALSE}
+
+ttt2[6,1] <- "Dose compared: 1.0 to 2.0 mg/day, with Ascorbic Acid delivery"
+ttt2[6,2] <- format(tt.2.3$statistic, digits = 3, nsmall = 3)
+ttt2[6,3] <- format(tt.2.3$p.value,scientific = FALSE, digits = 3, nsmall = 3)
+if (tt.2.3$p.value <= 0.05) {ttt2[6,4] <- TRUE} else {ttt2[6,4] <- FALSE}
+
+## Conduct Bonferroni and Benjamini-Hochberg corrections
+ttt2[,5] <- format(p.adjust(ttt2[,3], method = "bonferroni"), scientific = FALSE, digits = 3, nsmall = 3)
+ttt2[,6] <- format(p.adjust(ttt2[,3], method = "BH"), scientific = FALSE, digits = 3, nsmall = 3)
+```
+
+
+#### Results of T-tests Comparing Delivery Method within Dose Amounts
+
+The first set of analyses include the comparison of delivery method by dosing amount. The mean length of Odontoblasts are compared with dose held constant and delivery method compared. The following table summarises these results. 
+
+`r kable(ttt1, format = "html", table.attr = "style='width:80%;'", digits = 3) %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+From these data it appears that the two different delivery methods due vary in effectiveness at lower and medium doses (0.5 and 1.0 mg/day) with Orange Juice appearing more effective. At the higher dose of 2.0 mg/day, the effect is not found. 
+
+Both the Bonferroni correction to correct for the Family-Wise Error Rate, and the Benjamini-Hochberg Correction to correct for False Discovery Rate, were applied to the results. While both correction do change the p-value, there are no changes to the impact of the results. Given that there are only three tests conducted, this is not surprising. 
+
+#### Results of T-tests Comparing Doseage pairs within Delivery Method
+
+The second set of analyses include the comparison of doseage pairs by delivery method. The mean length of Odontoblasts are compared with delivery method held constant and pairs of doseage amounts compared (i.e., 0.5 to 1.0, 0.5 to 2.0, and 1.0 to 2.0). The following table summarises these results. 
+
+`r kable(ttt2, format = "html", table.attr = "style='width:80%;'", digits = 3) %>% kable_styling(bootstrap_options = "bordered", position = "left")`
+
+From these data it appears that the two different delivery methods due vary in effectiveness at lower and medium doses (0.5 and 1.0 mg/day) with Orange Juice appearing more effective. At the higher dose of 2.0 mg/day, the effect is not found. 
+
+Again, the Bonferroni correction to correct for the Family-Wise Error Rate, and the Benjamini-Hochberg Correction to correct for False Discovery Rate, were applied to the results. Examining the False Discovery Rate correction, there are no important changes. However, when correcting the Family-Wise Error Rate, one of the six tests, Orange Juice compared at 1.0 to 2.0 did fall above the alpha = 0.05 cutoff level. 
+
+## Part 2 Conclusion
+
+The of the confidence interval analysis and the t-test analysis are essentailly the same. As a result, it is reasonable to conclude that increasing doseage of both ascorbic acid and orange juice above a minimum amount is effective in increasing odontoblast length. At the highest dose, there is no indicated difference in the delivery method. 
+
+When comparing the various doseage pairs, all appear to have a significant impact, regardless of delivery method. However the Bonferroni correction for Family-Wise Error Rate does call one effect into question.
