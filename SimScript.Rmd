@@ -5,8 +5,13 @@ date: "July 27, 2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+require(dplyr)
+require(cowplot)
+set.seed(14945)
+
 ```
 
 ## Part 1: Simulation Exercise
@@ -20,21 +25,153 @@ lambda <- 0.20
 mu <- 1/lambda
 sigma <- 1/lambda
 
+
 ```
 
 ### Discussion
 
 The exponential distribution is the probability distribution in which events occur continuously and independently based on a constant rate of change. It descibes the time between events in a Poission process (https://en.wikipedia.org/wiki/Exponential_distribution).
 
-The exponential distribution has a theoretical mean and standard deviation equal to 1/lambda, where lambda is the rate of change in the underlying Poisson process.
+The exponential distribution has a theoretical mean and standard deviation equal to 1/lambda, where lambda is the rate of change in the underlying Poisson process. This means that the shape of the exponential distribution is completely dependent on the rate of change (lambda) as illustrated in this plot.
 
+```{r plot1, fig.width= 12}
 
-## Including Plots
+## use ggplot to create replication of three exponential distributions with three different lambdas.
 
-You can also embed plots, for example:
+g <- ggplot(data.frame(x=c(0,7)),aes(x=x))
+g <- g + stat_function(fun=dexp,geom = "line",size=2,col="blue",args = (rate=.5))
+g <- g + stat_function(fun=dexp,geom = "line",size=2,col="green",args = (rate=1.0))
+g <- g + stat_function(fun=dexp,geom = "line",size=2,col="red",args = (rate=1.5))
+g <- g + annotate("text",x=6,y=1.5,label = "lambda = 1.5", color = "red", cex = 4)
+g <- g + annotate("text",x=6,y=1.43,label = "lambda = 1.0", color = "green", cex = 4)
+g <- g + annotate("text",x=6,y=1.36,label = "lambda = 0.5", color = "blue", cex = 4)
+g
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+The impact of the changes in lambda are clear from the above chart. 
+
+### Simulation
+
+The task at hand is to  simulate 1000 exponential distributions with 40 observations each to determine of the Central Limit Theorem is support for exponential distributions. That is, test the distribution of the means and standard deviations of 1000 simulations of of 40 values from taken from an exponential distribution with Lambda = 0.20, to determine if they approximate the theoretical mu and sigma of the distribution, 1/lambda = 1/0.20 = 5. 
+
+```{r caluclations}
+## perform calculations for simulation
+## simsd is the standard deviation of each simulation
+## simmn is the mean of each simulation
+
+simmn <- rep(NULL, time=1000)
+simsd <- rep(NULL, time=1000)
+
+for (i in 1 : 1000){
+        simmn[i] <- mean(rexp(n = 40, rate = 0.20)) 
+        simsd[i] <- sd(rexp(n = 40, rate = 0.20))
+}
+
+mean.simmn <- mean(simmn)
+mean.simsd <- mean(simsd)
+
+
+```
+
+If the CLT holds, one would expect to see the mean of the simulated means and the mean of the simulated standard deviations to be approximately equal to the theoretical value of 5 (1/lambda = 1/.2 = 5.0). The actual calculated mean of the simulated means is `r mean.simmn`, and the calculated mean of the simulated standard deviations is `r mean.simsd`.
+
+The following creates the plots showing a histogram of the mean of the simulated means and the mean of the simulated standard deviations.
+
+```{r histograms, fig.width= 12}
+
+
+g <- ggplot(data.frame(simmn), aes(simmn)) + geom_histogram(binwidth = 0.20, col = "navy", fill = "blue")
+g <- g + labs(x = "Mean of Calculated Means", title = "Distribution of Means", y = "Freq Count")
+g <- g + coord_cartesian(xlim=c(3,8), ylim=c(0,100))
+g <- g + geom_vline(xintercept = 5, col = "orange", lwd = 1)
+g <- g + geom_vline(xintercept = mean(simmn), col = "orange", lwd = 1, lty = 2)
+g <- g + annotate("text",x=7,y=100,label = "Solid Line at mu", color = "black", cex = 4)
+g <- g + annotate("text",x=7,y=95,label = "Dashed Line at mean", color = "black", cex = 4)
+h <- ggplot(data.frame(simsd), aes(simsd)) + geom_histogram(binwidth = 0.20, col = "brown", fill = "orange")
+h <- h + labs(x = "Mean of Calculated St Devs", title = "Distribution of Standard Deviations", y = "Freq Count")
+h <- h + coord_cartesian(xlim=c(3,8), ylim=c(0,100))
+h <- h + geom_vline(xintercept = 5, col = "blue", lwd = 1)
+h <- h + geom_vline(xintercept = mean(simsd), col = "blue", lwd = 1, lty = 2)
+h <- h + annotate("text",x=7,y=100,label = "Solid Line at sigma", color = "black", cex = 4)
+h <- h + annotate("text",x=7,y=95,label = "Dashed Line at St Dev", color = "black", cex = 4)
+plot_grid(g,h)
+
+
+```
+
+### Part 1 Conclusion
+
+Both the calculated statistics and the two histograms show what appears to be a far more Gaussian distribution of the mean and of the standard deviation about the theoretical values of 5 for both mu and sigma. It appears reasonable to conclude that the Central Limit Theorem holds in the case of exponential distributions. 
+
+The actual calculated mean of the simulated means is `r mean.simmn` compared to a theoretical value of 5.0. The calculated mean of the simulated standard deviations is `r mean.simsd` compared to a theoretical value of 5.0.
+
+## Part 2: Basic Inferential Data Analysis 
+
+In 1947 E.W. Crampton published "The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig" in the Journal of Nutrition. (see Crampton, E. W. (1947) The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig. The Journal of Nutrition 33(5): 491–504. http://jn.nutrition.org/content/33/5/491.full.pdf). In his paper he discussed the impact of two different forms of vitamin C, administered in three does levels, on tooth growth in Guinea Pigs.
+
+The research design utilized 60 Guinea Pigs each of which was administered Vitamin C either in the form of orange juice (coded OJ), or ascorbic acid (coded as VC). Withing the two groups the animals were further divided into three group based on dosage (0.5, 1, or 2 mg/day). The length of the odontoblasts were then measured (presumably in microns). 
+
+This analysis will attempt to determine the impact of the various delivery methods/dosages on the length of the odontoblasts.
+
+### Data Mangement
+
+As the ToothGrowth database is a part of the R package installation it needs only to be loaded in order for analysis to be conducted. A frequency graph of the odontoblast length for each possible combination is shown.
+
+```{r loadToothGrowth}
+
+data(ToothGrowth)
+
+```
+
+### Exploratory Data Analysis
+
+The first step is to examine the data grouped by the two effect variables, dose and delivery method. A histogram of each combination is shown below.
+
+```{r ExplPlot1, fig.width=12}
+g <- ggplot(ToothGrowth, aes(len)) + geom_histogram(bins = 10, col = "brown", fill = "orange")
+g <- g + facet_grid(supp ~ dose) + theme_grey()
+g <- g + labs(x = "Length of Odontoblasts in Microns", title = "Length of Odontoblasts by Delivery Method and Dose", y = "Count by Length")
+g
+
+```
+
+It appears clear that there are some differences based on dosage amounts within delivery methods, though the difference between delivery methods at any given dose seem a little less clear. 
+
+#### Adding the Confidence Intervals
+
+Layering the upper ad lower confidence intervals may provide some insight.
+
+```{r addConfInter, fig.width = 12}
+## Get Mean and stdev for each combination, store id dataframe ci.in
+
+ci.mn <- summarise(group_by(ToothGrowth, dose, supp), mean(len))
+ci.sd <- summarise(group_by(ToothGrowth, dose, supp), sd(len))
+ci.in <- merge(ci.mn,ci.sd, by = c("dose","supp"))
+
+colnames(ci.in) <- c("dose","supp","Mean","StDev")
+
+
+## Now get the t-distribution based CI for all 6 
+
+ci.in <- mutate(ci.in, LowerBound = ci.in$Mean - (qt(.975,9) * (ci.in$StDev/sqrt(10))))
+ci.in <- mutate(ci.in, UpperBound = ci.in$Mean + (qt(.975,9) * (ci.in$StDev/sqrt(10))))
+
+ToothGrowth <- left_join(ToothGrowth, ci.in, by = c("dose","supp"))
+names(ToothGrowth)[3] <- "Dose"
+names(ci.in)[1] <- "Dose"
+names(ToothGrowth)[2] <- "Delivery.Meth"
+names(ci.in)[2] <- "Delivery.Meth"
+
+## Repeat the plots
+
+g <- ggplot(ToothGrowth, aes(len)) + geom_histogram(bins = 10, col = "brown", fill = "orange")
+g <- g + geom_vline(aes(xintercept = LowerBound)) + geom_vline(aes(xintercept = UpperBound))
+g <- g + labs(x = "Length of Odontoblasts in Microns", title = "Length of Odontoblasts by Delivery Method and Dose", y = "Count by Length")
+g <- g + facet_grid(Delivery.Meth ~ Dose) + theme_grey()
+g
+
+```
+
+Examining the histograms with the 95% confidence interval shown suggests that there may be a significant effect from the delivery method at the lower two doses (0.5, and 1,0 mg/day). The method does not appear to be a significant effect at the higher does of 2.0mg/day.
+
