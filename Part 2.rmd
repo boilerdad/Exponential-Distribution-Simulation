@@ -1,0 +1,233 @@
+---
+title: "Statistical Inference Project"
+author: "JP Dunlap"
+date: "July 27, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---  
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 11px;
+  }
+td {  /* Table  */
+  font-size: 8px;
+}
+h1.title {
+  font-size: 24px;
+  color: DarkRed;
+}
+h1 { /* Header 1 */
+  font-size: 18px;
+  color: DarkRed;
+}
+h2 { /* Header 2 */
+    font-size: 16px;
+  color: Blue;
+}
+h3 { /* Header 3 */
+  font-size: 14px;
+   color: Blue;
+}
+h4 { /* Header 4 */
+  font-size: 12px;
+  color: Blue;
+}
+h5 { /* Header 3 */
+  font-size: 11px;
+  color: Blue;
+}
+code.r{ /* Code block */
+    font-size: 10px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 10px;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(ggplot2)
+require(dplyr)
+require(knitr)
+require(kableExtra)
+require(cowplot)
+set.seed(14945)
+
+```
+
+# Part 2: Basic Inferential Data Analysis 
+
+In 1947 E.W. Crampton published "The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig" in the Journal of Nutrition. (see Crampton, E. W. (1947) The growth of the odontoblast of the incisor teeth as a criterion of vitamin C intake of the guinea pig. The Journal of Nutrition 33(5): 491–504. http://jn.nutrition.org/content/33/5/491.full.pdf). In his paper he discussed the impact of two different forms of vitamin C, administered in three does levels, on tooth growth in Guinea Pigs.
+
+The research design utilized 60 Guinea Pigs each of which was administered Vitamin C either in the form of orange juice (coded OJ), or ascorbic acid (coded as VC). Withing the two groups the animals were further divided into three group based on dosage (0.5, 1, or 2 mg/day). The length of the odontoblasts were then measured (presumably in microns). 
+
+This analysis will attempt to determine the impact of the various delivery methods/dosages on the length of the odontoblasts.
+
+## Research Assumptions
+
+The analysis and conclusions for this research are based on the following assumptions:
+
+1) All animals in the study come from the same population of Guinea Pigs
+2) Animals are randomly assigned to each of the six possible treatment groups
+3) The growth or odondoblasts is normally distributed with an unknown mu and sigma
+
+## Data Mangement
+
+As the ToothGrowth database is a part of the R package installation it needs only to be loaded in order for analysis to be conducted. A frequency graph of the odontoblast length for each possible combination is shown.
+
+```{r loadToothGrowth}
+
+data(ToothGrowth)
+
+```
+
+## Exploratory Data Analysis - Examining Confidence Intervals
+
+The first step is to examine the data grouped by the two effect variables, dose and delivery method. A histogram of each combination is shown below. Layering the upper and lower confidence intervals may provide some insight.
+
+```{r addConfInter, width= 12, fig.height=3}
+## Get Mean and stdev for each combination, store id dataframe ci.in
+
+ci.mn <- summarise(group_by(ToothGrowth, dose, supp), mean(len))
+ci.sd <- summarise(group_by(ToothGrowth, dose, supp), sd(len))
+ci.in <- merge(ci.mn,ci.sd, by = c("dose","supp"))
+
+colnames(ci.in) <- c("dose","supp","Mean","StDev")
+
+
+## Now get the t-distribution based CI for all 6 
+
+ci.in <- mutate(ci.in, LowerBound = ci.in$Mean - (qt(.975,9) * (ci.in$StDev/sqrt(10))))
+ci.in <- mutate(ci.in, UpperBound = ci.in$Mean + (qt(.975,9) * (ci.in$StDev/sqrt(10))))
+
+ToothGrowth <- left_join(ToothGrowth, ci.in, by = c("dose","supp"))
+names(ToothGrowth)[3] <- "Dose"
+names(ci.in)[1] <- "Dose"
+names(ToothGrowth)[2] <- "Delivery.Meth"
+names(ci.in)[2] <- "Delivery.Meth"
+
+## Repeat the plots
+
+g <- ggplot(ToothGrowth, aes(len)) + geom_histogram(bins = 10, col = "brown", fill = "orange")
+g <- g + geom_vline(aes(xintercept = LowerBound)) + geom_vline(aes(xintercept = UpperBound))
+g <- g + labs(x = "Length of Odontoblasts in Microns", title = "Length of Odontoblasts by Delivery Method and Dose", y = "Count by Length")
+g <- g + facet_grid(Delivery.Meth ~ Dose) + theme_grey()
+g
+
+```
+
+Examining the histograms with the 95% confidence interval shown suggests that there may be a significant effect from the delivery method at the lower two doses (0.5, and 1,0 mg/day). The method does not appear to be a significant effect at the higher does of 2.0mg/day.
+
+Examining the actual lower and upper confidence intervals will provide additional insight.
+
+
+```{r byDose}
+
+byDose <- arrange(ci.in, Dose, Delivery.Meth)
+byMethod <- arrange(ci.in, Delivery.Meth, Dose)
+
+f1 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 0.5)
+f2 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 1)
+f3 <- filter(ci.in[,c(2,5,6)], ci.in$Dose == 2)
+e2 <- filter(ci.in[,c(1,5,6)], ci.in$Delivery.Meth == "OJ")
+e1 <- filter(ci.in[,c(1,5,6)], ci.in$Delivery.Meth == "VC")
+
+
+```
+
+<br><br>
+`r kable(byDose[,c(2,5,6)], format = "html", table.attr = "style='width:50%;height:10%;'") %>%
+        kable_styling(bootstrap_options = "condensed", position = "float_right") %>% 
+        group_rows("Dose 0.5 mg/day",1,2) %>%
+        group_rows("Dose 1.0 mg/day",3,4) %>% 
+        group_rows("Dose 2.0 mg/day",5,6)`
+
+#### By Dosing Levels
+Looking at a comparison of the CI bounds by dosing level may help to better understand the potential differences.
+
+**Dose at 0.50 mg/day**
+The confidence interval for the two delivery methods shows no overlap between the two. This seems to suggest that at the dose level of 0.50 mg/day, the delivery method does make a difference. 
+
+**Dose at 1.0 mg/day**
+Similarly the confidence interval for the two delivery methods shows no overlap between the two. This seems to suggest that at the dose level of 1.0 mg/day, the delivery method does make a difference. 
+
+**Dose at 2.0 mg/day**
+By contrast, The confidence interval for the two delivery methods shows a complete overlap between the two. This suggest that at the dose level of 2.0 mg/day, the delivery method no longer seems make a difference. 
+`r kable(NULL)`
+
+<br><br><br>
+`r kable(byMethod[,c(1,5,6)], format = "html", table.attr = "style='width:50%;height:10%;'") %>%
+        kable_styling(bootstrap_options = "condensed", position = "float_right") %>% 
+        group_rows("Orange Juice",1,2,3) %>%
+        group_rows("Ascorbic Acid",4,5,6)
+`
+
+#### By Delivery Method
+
+Looking at a comparison of the CI bounds by dosing level may help to better understand the potential differences.
+
+**Delivery Method - Orange Juice**
+The confidence interval for the three dose amounts shows no overlap between the lower two level, and a small overlap between the upper two. This seems to suggest that effect of the minimal dose of orange juice is less than the middle and higher dose, but that the effect between the middle and higher dose are less clear. 
+
+**Delivery Method - Ascorbic Acid**
+For ascorbic acid, the confidence interval for the three dose level shows no overlap at all. This seems to suggest that for ascorbic acid the size of the dose has a significant effect on growth.
+<br><br><br>
+
+### Conducting Hypotheses Testing Using Students T-Test
+
+T-tests are a traditional small sample statistic to examine the difference between two samples, in this case, taken from the same population. In the case of this data set, the comparison is between the various combinations of dose rate and delivery method. Note that it would also be appropriate to use other statistical tests such as one-way and two-way analysis of variance to explore these relationships, these techniques are outside of the scope of this project. 
+
+```{r Tcalcs}
+
+## Code to create all of the possible t.tests. This is stored in the source file, t-test.R and is called here. A copy of this code is in the appendix.
+
+fileLoc <- "C:/Users/Jeff/Google Drive/coursera/Data Science Course/Course Materials/6-Statistical Inference/Week 4/Exponential-Distribution-Simulation/t-test.R"
+source(fileLoc)
+
+```
+
+
+#### Hypotheses Test  Group 1 - Comparing Delivery Method within Dose Amounts
+
+##### H_0: mean_OJ EQ mean_VC - for each dosing amount
+##### H-a: mean_OJ NE mean_vc - for each dosing amount
+
+The first set of analyses include the comparison of delivery method by dosing amount. The mean length of Odontoblasts are compared with dose held constant and delivery method compared. The following table summarizes these results. 
+
+`r kable(ttt1, format = "html", table.attr = "style='width:50%;height:10%;'") %>%
+        kable_styling(bootstrap_options = "condensed", position = "float_right")`
+
+From these data it appears that the two different delivery methods due vary in effectiveness at lower and medium doses (0.5 and 1.0 mg/day) with Orange Juice appearing more effective. At the higher dose of 2.0 mg/day, the effect is not found. 
+
+Both the Bonferroni correction to correct for the Family-Wise Error Rate, and the Benjamini-Hochberg Correction to correct for False Discovery Rate, were applied to the results. While both correction do change the p-value, there are no changes to the impact of the results. Given that there are only three tests conducted, this is not surprising. 
+
+As a result we are able to reject the null hypothesis at dosing levels 0.5 and 1.0 mg/day. The null hypothesis is not rejected for the dosing level at 2.0 mg/day.
+
+#### Hypotheses Test  Group 2 - Comparing Dosing Combinations within Delivery Method
+
+##### H_0: mean_dosea EQ mean_doseb - for each possbile pair of dosing amount holding delivery method constant
+##### H-a: mean_dosea NE mean_doseb - for each possbile pair of dosing amount holding delivery method constant
+
+The second set of hypotheses include the comparison of dosage pairs by delivery method. The mean length of Odontoblasts are compared with delivery method held constant and pairs of dosage amounts compared (i.e., 0.5 to 1.0, 0.5 to 2.0, and 1.0 to 2.0). In all there are six possible sets of hypotheses.
+
+The following table summarizes these results. 
+
+`r kable(ttt2, format = "html", table.attr = "style='width:50%;height:10%;'") %>%
+        kable_styling(bootstrap_options = "condensed", position = "float_right")`
+
+From these data it appears that the two different delivery methods due vary in effectiveness at lower and medium doses (0.5 and 1.0 mg/day) with Orange Juice appearing more effective. At the higher dose of 2.0 mg/day, the effect is not found. 
+
+Again, the Bonferroni correction to correct for the Family-Wise Error Rate, and the Benjamini-Hochberg Correction to correct for False Discovery Rate, were applied to the results. Examining the False Discovery Rate correction, there are no important changes. However, when correcting the Family-Wise Error Rate, one of the six tests, Orange Juice compared at 1.0 to 2.0 did fall above the alpha = 0.05 cutoff level. 
+
+It is reasonable to reject the null hypothesis in each of the six possible pairings, based on the individual t-tests, suggesting that dose rates do make a difference. However when applying the correction for Family-Wise Error Rate, it would be reasonable to fail to reject the null hypothesis comparing 1.0 to 2.0 mg/day dosing via Orange Juice delivery.
+
+<br><br>
+
+## Part 2 Conclusion
+
+The of the confidence interval analysis and the hypotheses testing (t-test) analyses are essentially the same. As a result, it is reasonable to conclude that increasing dosage of both ascorbic acid and orange juice above a minimum amount is effective in increasing odontoblast length. At the highest dose, there is no indicated difference in the delivery method. 
+
+When comparing the various dosage pairs, all appear to have a significant impact, regardless of delivery method. However the Bonferroni correction for Family-Wise Error Rate does call one effect into question.
